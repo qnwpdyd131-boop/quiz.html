@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>브롤스타즈 테마 아토피 퀴즈</title>
+    <!-- 귀여운 폰트 적용 (구글 폰트) -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Jua', 'Comic Sans MS', sans-serif;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            /* 만화책 망점(Halftone) 무늬 + 사막 느낌의 배경 */
+            background-color: #f4a261; /* 사막 주황색 */
+            background-image: radial-gradient(#d98236 15%, transparent 16%),
+                              radial-gradient(#d98236 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        /* 굵은 테두리와 진한 그림자를 가진 코믹스 컨테이너 */
+        .comic-container {
+            background-color: #e0e0e0;
+            border: 5px solid #000;
+            border-radius: 12px;
+            box-shadow: 8px 8px 0px #000;
+            width: 100%;
+            max-width: 650px;
+            padding: 25px;
+            position: relative;
+            display: none; /* JS로 제어 */
+        }
+        .comic-container.active {
+            display: block;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 텍스트 스타일 */
+        .title {
+            text-align: center;
+            font-size: 3rem;
+            color: #ffeb3b;
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 4px 4px 0 #000;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        /* 상단 상태바 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.8rem;
+            color: #fff;
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+            margin-bottom: 20px;
+        }
+
+        /* 캐릭터 + 말풍선 영역 */
+        .speech-area {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        /* 캐릭터 프로필 이미지 (SVG 컨테이너) */
+        .char-profile {
+            width: 110px;
+            height: 110px;
+            background-color: #fff;
+            border: 4px solid #000;
+            border-radius: 50%;
+            box-shadow: 4px 4px 0 #000;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .char-name {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffeb3b;
+            border: 3px solid #000;
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 1rem;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .char-wrapper {
+            position: relative;
+            margin-right: 20px;
+            margin-bottom: 15px;
+        }
+
+        /* 말풍선 */
+        .speech-bubble {
+            background-color: #fff;
+            border: 4px solid #000;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 1.4rem;
+            position: relative;
+            box-shadow: 4px 4px 0 #000;
+            flex-grow: 1;
+            word-break: keep-all;
+        }
+        
+        /* 말풍선 꼬리 */
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 12px 18px 12px 0;
+            border-style: solid;
+            border-color: transparent #000 transparent transparent;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 9px 14px 9px 0;
+            border-style: solid;
+            border-color: transparent #fff transparent transparent;
+        }
+
+        /* 버튼 */
+        .btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            border: 4px solid #000;
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #000;
+            margin-bottom: 15px;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-align: left;
+            word-break: keep-all;
+        }
+
+        .btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px #000;
+        }
+
+        .btn-start { background-color: #2196f3; color: #fff; justify-content: center; font-size: 2rem; }
+        .btn-restart { background-color: #f44336; color: #fff; justify-content: center; font-size: 1.8rem; margin-top: 20px; }
+        
+        .btn-a { background-color: #ff9800; color: #000; }
+        .btn-b { background-color: #4caf50; color: #fff; }
+
+        .badge {
+            background-color: #000;
+            color: #fff;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        /* 모달 (팝업창) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background-color: #fff;
+            border: 5px solid #000;
+            border-radius: 15px;
+            box-shadow: 8px 8px 0 #000;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: popIn 0.3s;
+        }
+
+        .modal-title {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+        }
+        .text-correct { color: #4caf50; }
+        .text-wrong { color: #f44336; }
+
+        .modal-exp {
+            background-color: #eeeeee;
+            border: 3px solid #000;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            word-break: keep-all;
+        }
+
+        .btn-next {
+            background-color: #ffeb3b;
+            color: #000;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 500px) {
+            .char-profile { width: 80px; height: 80px; }
+            .speech-bubble { font-size: 1.1rem; padding: 15px; }
+            .btn { font-size: 1.1rem; padding: 12px; }
+            .title { font-size: 2.5rem; }
+            .status-bar { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 시작 화면 -->
+    <div id="screen-start" class="comic-container active" style="text-align: center;">
+        <h1 class="title">아토피 관리<br>브롤 퀴즈!</h1>
+        <div style="font-size: 5rem; margin-bottom: 20px;">🌵</div>
+        <button class="btn btn-start" onclick="startQuiz()">게임 시작!</button>
+    </div>
+
+    <!-- 2. 퀴즈 화면 -->
+    <div id="screen-quiz" class="comic-container">
+        <div class="status-bar">
+            <div id="ui-progress">문제 1 / 12</div>
+            <div id="ui-score">점수: 0</div>
+        </div>
+
+        <div class="speech-area">
+            <div class="char-wrapper">
+                <div class="char-profile" id="ui-char-svg">
+                    <!-- SVG 삽입 위치 -->
+                </div>
+                <div class="char-name" id="ui-char-name">스파이크</div>
+            </div>
+            <div class="speech-bubble" id="ui-question">
+                질문이 들어갑니다!
+            </div>
+        </div>
+
+        <button class="btn btn-a" onclick="checkAnswer('A')">
+            <div class="badge">A</div>
+            <span id="ui-opt-a">A 선택지</span>
+        </button>
+        <button class="btn btn-b" onclick="checkAnswer('B')">
+            <div class="badge">B</div>
+            <span id="ui-opt-b">B 선택지</span>
+        </button>
+    </div>
+
+    <!-- 3. 모달 (해설) -->
+    <div id="modal-feedback" class="modal-overlay">
+        <div class="modal-box">
+            <h2 id="modal-title" class="modal-title text-correct">정답!</h2>
+            <div id="modal-exp" class="modal-exp">
+                해설 내용이 여기에 나타납니다.
+            </div>
+            <button class="btn btn-next" onclick="nextQuestion()">다음 ➔</button>
+        </div>
+    </div>
+
+    <!-- 4. 결과 화면 -->
+    <div id="screen-result" class="comic-container" style="text-align: center;">
+        <h1 class="title" style="font-size: 3.5rem;">게임 종료!</h1>
+        <p style="font-size: 1.8rem; margin-bottom: 10px; font-weight: bold;">최종 점수</p>
+        <p id="ui-final-score" style="font-size: 4rem; color: #2196f3; font-weight: bold; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;">
+            0 / 12
+        </p>
+        <button class="btn btn-restart" onclick="location.reload()">처음부터 다시 하기</button>
+    </div>
+
+    <script>
+        // --- 1. 순수 SVG로 직접 그린 브롤스타즈 캐릭터 데이터 ---
+        const characters = [
+            {
+                name: "스파이크",
+                svg: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+                        <!-- 얼굴(선인장) -->
+                        <circle cx="50" cy="55" r="40" fill="#4caf50" stroke="#000" stroke-width="4"/>
+                        <!-- 머리 위 붉은 꽃 -->
+                        <path d="M 40 18 Q 50 -5 60 18 Z" fill="#f44336" stroke="#000" stroke-width="3"/>
+                        <path d="M 35 25 Q 25 5 45 15 Z" fill="#f44336" stroke="#000" stroke-width="3"/>
+                        <path d="M 65 25 Q 75 5 55 15 Z" fill="#f44336" stroke="#000" stroke-width="3"/>
+                        <!-- 눈과 입 (구멍 뚫린 느낌) -->
+                        <circle cx="35" cy="50" r="6" fill="#1b5e20"/>
+                        <circle cx="65" cy="50" r="6" fill="#1b5e20"/>
+                        <ellipse cx="50" cy="70" rx="8" ry="12" fill="#1b5e20"/>
+                      </svg>`
+            },
+            {
+                name: "엘 프리모",
+                svg: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+                        <!-- 마스크 (파란색) -->
+                        <circle cx="50" cy="50" r="42" fill="#2196f3" stroke="#000" stroke-width="4"/>
+                        <!-- 피부색 입 주변 -->
+                        <path d="M 25 55 Q 50 110 75 55 L 75 80 Q 50 100 25 80 Z" fill="#ffccbc" stroke="#000" stroke-width="4"/>
+                        <!-- 이마 장식 (작은 빨간 별모양 느낌) -->
+                        <path d="M 45 20 L 55 20 L 50 30 Z" fill="#f44336" stroke="#000" stroke-width="2"/>
+                        <!-- 눈 (하얀색, 빨간 테두리) -->
+                        <path d="M 20 40 L 45 50 L 25 60 Z" fill="#fff" stroke="#f44336" stroke-width="3"/>
+                        <path d="M 80 40 L 55 50 L 75 60 Z" fill="#fff" stroke="#f44336" stroke-width="3"/>
+                        <!-- 입 (스마일) -->
+                        <path d="M 40 75 Q 50 85 60 75" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+                      </svg>`
+            },
+            {
+                name: "크로우",
+                svg: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+                        <!-- 머리 (검회색) -->
+                        <circle cx="50" cy="50" r="40" fill="#37474f" stroke="#000" stroke-width="4"/>
+                        <!-- 부리 (회색) -->
+                        <path d="M 30 55 L 50 85 L 70 55 Q 50 45 30 55" fill="#cfd8dc" stroke="#000" stroke-width="4"/>
+                        <!-- 화난 하얀 눈 (X자 흉터 느낌) -->
+                        <path d="M 25 35 L 45 45" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+                        <path d="M 75 35 L 55 45" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+                        <path d="M 40 25 L 45 40" stroke="#000" stroke-width="3"/>
+                      </svg>`
+            },
+            {
+                name: "콜트",
+                svg: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+                        <!-- 얼굴 피부 -->
+                        <circle cx="50" cy="55" r="38" fill="#ffccbc" stroke="#000" stroke-width="4"/>
+                        <!-- 빨간 리젠트 머리 -->
+                        <path d="M 10 50 Q 15 5 50 5 Q 85 5 90 50 Q 75 25 50 25 Q 25 25 10 50 Z" fill="#e91e63" stroke="#000" stroke-width="4"/>
+                        <!-- 짙은 눈썹 -->
+                        <path d="M 25 40 L 40 45" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M 75 40 L 60 45" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+                        <!-- 눈 -->
+                        <circle cx="35" cy="50" r="4" fill="#000"/>
+                        <circle cx="65" cy="50" r="4" fill="#000"/>
+                        <!-- 자신만만한 미소 -->
+                        <path d="M 40 70 Q 50 80 65 65" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+                        <!-- 턱의 반창고 X -->
+                        <path d="M 30 75 L 35 80 M 35 75 L 30 80" stroke="#d84315" stroke-width="2"/>
+                      </svg>`
+            },
+            {
+                name: "쉘리",
+                svg: `<svg viewBox="0 0 100 100" width="100%" height="100%">
+                        <!-- 얼굴 피부 (살짝 어두움) -->
+                        <circle cx="50" cy="55" r="38" fill="#d7ccc8" stroke="#000" stroke-width="4"/>
+                        <!-- 보라색 뾰족 머리 -->
+                        <path d="M 5 50 Q 20 0 50 15 Q 80 0 95 50 Q 75 25 50 25 Q 25 25 5 50 Z" fill="#9c27b0" stroke="#000" stroke-width="4"/>
+                        <path d="M 40 10 L 50 -5 L 60 10 Z" fill="#9c27b0" stroke="#000" stroke-width="3"/>
+                        <!-- 반창고 -->
+                        <rect x="25" y="60" width="16" height="6" fill="#ffab91" stroke="#000" stroke-width="2" transform="rotate(-15 33 63)"/>
+                        <!-- 눈 (한쪽 윙크) -->
+                        <circle cx="35" cy="48" r="4" fill="#000"/>
+                        <path d="M 60 48 Q 65 42 70 48" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+                        <!-- 씩 웃는 입 -->
+                        <path d="M 45 70 Q 55 75 65 68" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+                      </svg>`
+            }
+        ];
+
+        // --- 2. 퀴즈 데이터 ---
+        const quizData = [
+            {
+                q: "체육 시간에 땀을 엄청 흘렸다!",
+                a: "땀을 씻어 내고 피부를 부드럽게 말린 뒤 보습한다.",
+                b: "땀을 그대로 둔 채 교실에서 쉰다.",
+                ans: "A",
+                exp: "땀이 피부에 오래 남아 있으면 피부가 따갑고 가려울 수 있어. 미지근한 물로 땀을 씻고 수건으로 살살 닦은 다음 보습제를 발라 줘!"
+            },
+            {
+                q: "오늘 입을 옷을 고른다면?",
+                a: "피부에 까끌거리는 소재지만 예쁜 옷을 입는다.",
+                b: "피부에 자극이 적은 부드러운 옷을 입는다.",
+                ans: "B",
+                exp: "까끌까끌한 옷은 피부를 계속 자극해서 가려울 수 있어. 부드러운 면 소재의 옷을 입으면 피부에 닿는 자극을 줄일 수 있어."
+            },
+            {
+                q: "자기 전에 샤워할 때 나는?",
+                a: "뜨거운 물로 오래 씻어야 개운하다.",
+                b: "미지근한 물로 너무 오래 씻지 않는다.",
+                ans: "B",
+                exp: "뜨거운 물로 오래 씻으면 피부가 건조해져서 더 가려울 수 있어. 미지근한 물로 씻고 보습제를 발라 피부가 건조해지지 않도록 하자!"
+            },
+            {
+                q: "친구가 향이 강한 바디워시를 추천했다!",
+                a: "향료 등 자극 가능성을 살펴보고 피부에 맞는 제품을 선택한다.",
+                b: "향이 좋으니 일단 많이 사용한다.",
+                ans: "A",
+                exp: "향이 강한 제품은 사람에 따라 피부를 자극할 수 있어. 향이 없는 제품처럼 자극이 적은 제품을 고르는 게 좋아."
+            },
+            {
+                q: "친구가 '왜 그렇게 피부를 긁어?'라고 물어본다!",
+                a: "아토피는 전염되는 병이 아니라고 설명하고, 필요하면 믿을 만한 어른에게 도움을 요청한다.",
+                b: "창피해서 혼자 숨기고 아무에게도 말하지 않는다.",
+                ans: "A",
+                exp: "아토피 피부염은 친구에게 옮기는 병이 아니야. 차분하게 설명해 주고, 속상하다면 어른에게 도움을 요청해도 돼."
+            },
+            {
+                q: "친구 집에서 자고 오기로 했다!",
+                a: "친구가 쓰는 바디워시와 로션을 그냥 사용한다.",
+                b: "평소 사용하던 피부 관리 제품과 필요한 처방약을 챙긴다.",
+                ans: "B",
+                exp: "새로운 제품은 내 피부에 맞지 않을 수도 있어. 평소에 잘 사용하던 제품을 챙겨 가면 피부를 꾸준히 관리할 수 있어!"
+            },
+            {
+                q: "SNS에서 유명한 사람이 아토피에 좋다는 크림을 추천한다!",
+                a: "광고만 믿지 않고 성분과 사용 목적을 확인하며, 필요하면 보호자나 의료진에게 물어본다.",
+                b: "유명인이 추천했으니 바로 구매해서 사용한다.",
+                ans: "A",
+                exp: "유명인이 사용한다고 해서 나에게도 꼭 좋은 것은 아니야. 제품마다 쓰임이 다르니 내 피부에 맞는지 확인한 뒤 사용하자!"
+            },
+            {
+                q: "편의점에서 간식을 고르는데, 아토피에 음식이 영향을 줄까 걱정된다!",
+                a: "아토피에 안 좋다는 음식을 전부 끊는다.",
+                b: "무작정 제한하지 않고, 특정 음식과 증상의 관련성이 의심되면 보호자와 의료진에게 상담한다.",
+                ans: "B",
+                exp: "음식을 무작정 끊으면 성장에 필요한 영양소가 부족해질 수 있어. 의료진에게 상담하자!"
+            },
+            {
+                q: "밤마다 가려워서 잠을 못 잔다!",
+                a: "보호자에게 알리고 처방받은 치료제를 지시에 따라 사용한다.",
+                b: "집에 있는 연고를 발라 보거나 시원해질 때까지 긁는다.",
+                ans: "A",
+                exp: "임의로 약을 선택하거나 사용법을 바꾸면 안 돼. 반복적인 긁기는 피부 손상을 악화시킬 수 있어."
+            },
+            {
+                q: "피부가 빨개지고 진물까지 나기 시작했다!",
+                a: "원래 아토피는 그런 거니까 그냥 참는다.",
+                b: "보호자에게 알리고 의료진에게 진료받는다.",
+                ans: "B",
+                exp: "피부가 심하게 빨개지거나 진물이 나면 심해졌거나 감염이 생겼을 수 있어. 꼭 진료를 받아 보자!"
+            },
+            {
+                q: "아토피가 며칠 동안 괜찮아서 연고를 끊고 싶다!",
+                a: "증상이 없어졌으니 처방받은 치료를 무조건 중단한다.",
+                b: "임의로 중단하지 않고 처방받은 사용법을 확인한다.",
+                ans: "B",
+                exp: "피부가 좋아졌다고 해서 약을 바로 끊어도 되는 것은 아니야. 처방받은 방법을 따르자!"
+            },
+            {
+                q: "처방받은 연고를 발랐는데도 증상이 계속 심해진다!",
+                a: "처방된 용법을 지키고 보호자와 함께 의료진에게 상담한다.",
+                b: "연고를 더 많이 바른다.",
+                ans: "A",
+                exp: "연고를 많이 바른다고 더 빨리 낫는 것은 아니야. 계속 가렵다면 의료진에게 도움을 받자!"
+            }
+        ];
+
+        // --- 3. 게임 로직 ---
+        let currentIndex = 0;
+        let score = 0;
+
+        function showScreen(id) {
+            document.querySelectorAll('.comic-container').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startQuiz() {
+            currentIndex = 0;
+            score = 0;
+            showScreen('screen-quiz');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const data = quizData[currentIndex];
+            
+            // 상태 업데이트
+            document.getElementById('ui-progress').innerText = `문제 ${currentIndex + 1} / ${quizData.length}`;
+            document.getElementById('ui-score').innerText = `점수: ${score}`;
+            
+            // 랜덤 캐릭터 지정
+            const char = characters[Math.floor(Math.random() * characters.length)];
+            document.getElementById('ui-char-svg').innerHTML = char.svg;
+            document.getElementById('ui-char-name').innerText = char.name;
+
+            // 문제 텍스트
+            document.getElementById('ui-question').innerText = data.q;
+            document.getElementById('ui-opt-a').innerText = data.a;
+            document.getElementById('ui-opt-b').innerText = data.b;
+        }
+
+        function checkAnswer(selected) {
+            const data = quizData[currentIndex];
+            const modalTitle = document.getElementById('modal-title');
+            
+            if (selected === data.ans) {
+                score++;
+                modalTitle.innerText = "⭐ 정답! ⭐";
+                modalTitle.className = "modal-title text-correct";
+            } else {
+                modalTitle.innerText = "💥 오답! 💥";
+                modalTitle.className = "modal-title text-wrong";
+            }
+
+            document.getElementById('ui-score').innerText = `점수: ${score}`;
+            document.getElementById('modal-exp').innerText = data.exp;
+            document.getElementById('modal-feedback').classList.add('active');
+        }
+
+        function nextQuestion() {
+            document.getElementById('modal-feedback').classList.remove('active');
+            currentIndex++;
+
+            if (currentIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        function endQuiz() {
+            showScreen('screen-result');
+            document.getElementById('ui-final-score').innerText = `${score} / ${quizData.length}`;
+        }
+    </script>
+</body>
+</html>
