@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아토피 튼튼 요리사!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #fff0f5; /* 귀여운 파스텔 배경 */
+            background-image: 
+                radial-gradient(#ffc0cb 20%, transparent 20%), 
+                radial-gradient(#ffc0cb 20%, transparent 20%);
+            background-size: 50px 50px;
+            background-position: 0 0, 25px 25px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 2rem 1rem;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border: 8px solid #ffb6c1;
+            box-shadow: 0 20px 50px rgba(255, 105, 180, 0.3);
+            border-radius: 40px;
+            width: 100%;
+            max-width: 1100px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 2rem;
+        }
+        
+        @media (min-width: 1024px) {
+            .game-container {
+                flex-direction: row; /* 데스크탑에서는 가로 배치 (좌우) */
+                align-items: stretch;
+            }
+        }
+
+        /* --- 왼쪽: 세로로 긴 리얼 냉장고 --- */
+        .fridge-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fridge-exterior {
+            background: linear-gradient(to right, #666, #e0e0e0, #666); /* 메탈 질감 */
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 10px 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 700px; /* 세로로 긴 형태 */
+            display: flex;
+            perspective: 1200px; /* 3D 효과 원근감 */
+        }
+
+        /* 냉장고 양문 (3D 열림 효과) */
+        .fridge-door {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 120px;
+            background: linear-gradient(to right, #a0a0a0, #e8e8e8, #909090);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3), 5px 0 15px rgba(0,0,0,0.5);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+        }
+        .fridge-door-handle {
+            width: 10px; height: 150px;
+            background: #555;
+            border-radius: 5px;
+            box-shadow: inset 2px 2px 5px rgba(255,255,255,0.5);
+        }
+        .fridge-door.left {
+            left: -100px; /* 문이 바깥으로 열린 위치 */
+            border-radius: 10px 0 0 10px;
+            transform: rotateY(-50deg);
+            transform-origin: right;
+            justify-content: flex-end;
+            padding-right: 15px;
+        }
+        .fridge-door.right {
+            right: -100px;
+            border-radius: 0 10px 10px 0;
+            transform: rotateY(50deg);
+            transform-origin: left;
+            justify-content: flex-start;
+            padding-left: 15px;
+        }
+
+        .fridge-interior {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: inset 0 15px 30px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+        }
+        .fridge-compartment {
+            flex: 1;
+            background: linear-gradient(to bottom, #e0f7fa 0%, #b2ebf2 100%);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        /* 냉장고 안쪽 조명 */
+        .fridge-compartment::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%; transform: translateX(-50%);
+            width: 90%; height: 80px;
+            background: radial-gradient(ellipse at top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .glass-shelf {
+            flex: 1;
+            border-bottom: 6px solid rgba(255,255,255,0.85);
+            box-shadow: 0 6px 8px rgba(0, 150, 200, 0.1);
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 5px;
+        }
+        .glass-shelf:last-child { border-bottom: none; }
+
+        /* 식재료 버튼 */
+        .ingredient-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #81d4fa;
+            border-radius: 15px;
+            box-shadow: 0 4px 0 #4fc3f7, 0 5px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            cursor: pointer;
+            z-index: 10;
+            width: 70px; height: 85px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .ingredient-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #4fc3f7, 0 2px 3px rgba(0,0,0,0.1);
+        }
+
+        /* --- 오른쪽: 요리 영역 및 UI --- */
+        .cooking-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .hp-bar-container {
+            background: #ffe4e1;
+            border: 4px solid #ff69b4;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            width: 100%;
+            height: 35px;
+        }
+        .hp-fill {
+            background: linear-gradient(90deg, #ff69b4, #ff1493);
+            height: 100%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+        }
+
+        /* 냄비 UI */
+        .pot-wrapper {
+            background: #fff8e1; /* 따뜻한 느낌의 주방 배경 */
+            border: 4px dashed #ffb347;
+            border-radius: 30px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pot-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(to bottom, #555, #222);
+            border-radius: 10px 10px 120px 120px;
+            box-shadow: 0 25px 30px rgba(0,0,0,0.4), inset 0 -10px 25px rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 25px;
+            margin-top: 20px;
+        }
+        .pot-lid-rim {
+            position: absolute;
+            top: -20px;
+            width: 100%;
+            height: 40px;
+            background: #ffb347; 
+            border-radius: 50%;
+            border: 5px solid #cc8400;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .pot-handle {
+            position: absolute;
+            top: 50px;
+            width: 45px; height: 35px;
+            border: 10px solid #444;
+            border-radius: 10px;
+        }
+        .pot-handle.left { left: -40px; border-right: none; border-radius: 20px 0 0 20px; }
+        .pot-handle.right { right: -40px; border-left: none; border-radius: 0 20px 20px 0; }
+
+        /* 애니메이션 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px) rotate(-4deg); }
+            20%, 40%, 60%, 80% { transform: translateX(10px) rotate(4deg); }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+
+        @keyframes floatUpDamage {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-100px) scale(2.5); }
+        }
+        .damage-text {
+            position: absolute;
+            color: #ff3333;
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-shadow: 4px 4px 0 #fff, -4px -4px 0 #fff, 4px -4px 0 #fff, -4px 4px 0 #fff;
+            animation: floatUpDamage 1s forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .pot-item {
+            animation: bounceItem 1s infinite alternate ease-in-out;
+            filter: drop-shadow(0 5px 8px rgba(0,0,0,0.6));
+            margin: 0 -8px;
+            font-size: 3.5rem;
+        }
+        @keyframes bounceItem {
+            0% { transform: translateY(0) rotate(-8deg); }
+            100% { transform: translateY(-20px) rotate(8deg); }
+        }
+
+        /* 결과 모달 & 폭죽 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 200;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: #fff;
+            border: 8px solid #ffb347;
+            border-radius: 30px;
+            padding: 40px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 600px;
+            width: 90%;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+
+        .confetti {
+            position: fixed;
+            width: 15px; height: 15px;
+            z-index: 300; pointer-events: none;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(1080deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="gameUI" class="game-container">
+        
+        <!-- 왼쪽 영역: 리얼 냉장고 -->
+        <div class="fridge-section">
+            <h2 class="text-3xl text-blue-500 drop-shadow-sm mb-4">❄️ 신선한 냉장고</h2>
+            
+            <div class="fridge-exterior">
+                <!-- 입체 문 -->
+                <div class="fridge-door left"><div class="fridge-door-handle"></div></div>
+                <div class="fridge-door right"><div class="fridge-door-handle"></div></div>
+                
+                <!-- 냉장고 내부 (선반 4개) -->
+                <div class="fridge-interior">
+                    <div class="fridge-compartment">
+                        <div class="glass-shelf" id="shelf1"></div>
+                        <div class="glass-shelf" id="shelf2"></div>
+                        <div class="glass-shelf" id="shelf3"></div>
+                        <div class="glass-shelf" id="shelf4"></div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-gray-500 mt-4 text-xl">재료를 클릭해서 냄비에 넣어요! (최대 5개)</p>
+        </div>
+
+        <!-- 오른쪽 영역: 요리 냄비 & UI -->
+        <div class="cooking-section">
+            
+            <!-- 상단 헤더 -->
+            <div class="flex flex-col gap-4 border-b-4 border-pink-100 pb-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-5xl text-pink-500 drop-shadow-sm m-0">👩‍🍳 요리 시간!</h1>
+                    <button id="bgmBtn" class="bg-gray-400 text-white px-5 py-2 rounded-full font-bold text-xl shadow-[0_4px_0_rgba(0,0,0,0.2)] active:translate-y-1 active:shadow-none transition-all" onclick="toggleBGM()">
+                        🔈 BGM 켜기
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
+                    <span class="text-3xl text-gray-700">❤️ 체력/점수:</span>
+                    <div class="hp-bar-container flex-1">
+                        <div id="hpBar" class="hp-fill w-full"></div>
+                    </div>
+                    <span id="hpText" class="text-4xl text-pink-600 font-bold w-16 text-right">100</span>
+                </div>
+            </div>
+
+            <!-- 하단 냄비 영역 -->
+            <div class="pot-wrapper" id="potArea">
+                <h2 class="text-3xl text-amber-600 drop-shadow-sm">🍲 보글보글 마법의 냄비</h2>
+                
+                <div class="pot-container">
+                    <div class="pot-handle left"></div>
+                    <div class="pot-handle right"></div>
+                    <div class="pot-lid-rim"></div>
+                    <!-- 들어간 재료들 -->
+                    <div id="potIngredients" class="flex flex-wrap justify-center items-end z-10 px-4 h-[70px]"></div>
+                </div>
+
+                <div class="mt-10 flex gap-6">
+                    <button id="cookBtn" class="bg-gradient-to-b from-yellow-400 to-orange-500 border-4 border-orange-600 rounded-full shadow-[0_6px_0_#b35900] text-white font-bold text-4xl px-10 py-4 transition-all active:translate-y-[6px] active:shadow-none" onclick="cook()">
+                        요리 완성하기!
+                    </button>
+                    <button class="bg-gray-200 border-4 border-gray-400 rounded-full shadow-[0_6px_0_#888] text-gray-700 font-bold text-2xl px-6 py-4 transition-all active:translate-y-[6px] active:shadow-none" onclick="resetGame()">
+                        다시하기
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 결과 모달 -->
+    <div id="resultModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modalTitle" class="text-5xl text-orange-500 mb-6 drop-shadow-md">요리 완성!</h2>
+            <div id="dishName" class="text-6xl text-blue-600 font-bold my-8 p-6 bg-blue-50 rounded-3xl border-4 border-blue-200 shadow-inner">
+                이름이 여기에 나옵니다!
+            </div>
+            <p id="modalDesc" class="text-3xl text-gray-700 mb-8"></p>
+            <button class="bg-pink-400 border-4 border-pink-600 rounded-full shadow-[0_6px_0_#c2185b] text-white font-bold text-3xl px-10 py-4 active:translate-y-[6px] active:shadow-none" onclick="closeModal()">
+                새로운 요리하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const badIngredients = [
+            { name: '계란', emoji: '🥚' }, { name: '땅콩', emoji: '🥜' },
+            { name: '호두', emoji: '🌰' }, { name: '아몬드', emoji: '🫘' },
+            { name: '초콜릿', emoji: '🍫' }, { name: '옥수수', emoji: '🌽' },
+            { name: '빵', emoji: '🍞' }
+        ];
+
+        const goodIngredients = [
+            { name: '돼지고기', emoji: '🥩' }, { name: '소고기', emoji: '🍖' },
+            { name: '콩', emoji: '🫛' }, { name: '사과', emoji: '🍎' },
+            { name: '키위', emoji: '🥝' }, { name: '망고', emoji: '🥭' },
+            { name: '오이', emoji: '🥒' }, { name: '양파', emoji: '🧅' },
+            { name: '새우', emoji: '🍤' }
+        ];
+
+        let currentHp = 100;
+        let pot = [];
+        let isCooked = false;
+
+        const hpBar = document.getElementById('hpBar');
+        const hpText = document.getElementById('hpText');
+        const potArea = document.getElementById('potArea');
+        const potIngredients = document.getElementById('potIngredients');
+        const modal = document.getElementById('resultModal');
+
+        // BGM 로직
+        let audioCtx = null;
+        let isBgmPlaying = false;
+        let bgmSeq = null;
+        let nextNoteTime = 0;
+        let currentNote = 0;
+        
+        const melody = [
+            523.25, 659.25, 783.99, 1046.50,
+            783.99, 659.25, 523.25, 392.00
+        ];
+
+        function init() {
+            let allIngredients = [];
+            badIngredients.forEach(ing => allIngredients.push({ ...ing, isBad: true }));
+            goodIngredients.forEach(ing => allIngredients.push({ ...ing, isBad: false }));
+            allIngredients.sort(() => Math.random() - 0.5); // 16개
+
+            const shelves = [
+                document.getElementById('shelf1'), document.getElementById('shelf2'),
+                document.getElementById('shelf3'), document.getElementById('shelf4')
+            ];
+            shelves.forEach(s => s.innerHTML = '');
+
+            // 4개 선반에 4개씩 분배
+            allIngredients.forEach((ing, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'ingredient-btn';
+                btn.innerHTML = `
+                    <span class="text-4xl">${ing.emoji}</span>
+                    <span class="text-lg text-gray-800 font-bold mt-1">${ing.name}</span>
+                `;
+                btn.onclick = (e) => addIngredient(ing, e);
+                shelves[Math.floor(index / 4)].appendChild(btn);
+            });
+            updateHpUI();
+        }
+
+        function addIngredient(ing, event) {
+            if (isCooked || pot.length >= 5) return;
+
+            pot.push(ing);
+
+            const item = document.createElement('span');
+            item.className = 'pot-item';
+            item.innerText = ing.emoji;
+            potIngredients.appendChild(item);
+
+            if (ing.isBad) {
+                currentHp = Math.max(0, currentHp - 10);
+                showDamageText();
+                triggerShake();
+                playSfx('bad');
+            } else {
+                playSfx('good');
+            }
+
+            updateHpUI();
+        }
+
+        function cook() {
+            if (pot.length === 0 || isCooked) return;
+            isCooked = true;
+
+            const badItems = pot.filter(item => item.isBad);
+            const dishNameText = generateFunnyDishName(pot, badItems);
+            
+            document.getElementById('dishName').innerText = dishNameText;
+
+            if (badItems.length === 0) {
+                const bonus = pot.length * 10;
+                currentHp += bonus;
+                updateHpUI();
+                
+                document.getElementById('modalTitle').innerText = "🎉 대성공! 🎉";
+                document.getElementById('modalTitle').className = "text-5xl text-green-500 mb-6 drop-shadow-md";
+                document.getElementById('dishName').className = "text-6xl text-green-600 font-bold my-8 p-6 bg-green-50 rounded-3xl border-4 border-green-300 shadow-inner";
+                document.getElementById('modalDesc').innerText = `건강한 재료만 쏙쏙! 보너스 +${bonus}점!`;
+                shootConfetti();
+                playSfx('success');
+            } else {
+                document.getElementById('modalTitle').innerText = "💀 앗 가려워! 💀";
+                document.getElementById('modalTitle').className = "text-5xl text-red-500 mb-6 drop-shadow-md";
+                document.getElementById('dishName').className = "text-6xl text-red-600 font-bold my-8 p-6 bg-red-50 rounded-3xl border-4 border-red-300 shadow-inner";
+                document.getElementById('modalDesc').innerText = "아토피에 안 좋은 재료가 들어갔어요 ㅠㅠ";
+                playSfx('fail');
+            }
+
+            modal.classList.add('active');
+        }
+
+        function generateFunnyDishName(potItems, badItems) {
+            if (badItems.length > 0) return `앗 가려워! [${badItems[0].name}] 범벅`;
+
+            const names = potItems.map(i => i.name);
+            const has = (n) => names.includes(n);
+
+            if (has('소고기') && has('돼지고기')) return "우주최강 더블 고기 볶음!";
+            if (has('사과') && has('키위') && has('망고')) return "상큼폭발 열대 과일 파티";
+            if (has('새우') && has('양파')) return "눈물 찔끔 바삭 새우튀김";
+            if (has('콩') && has('오이')) return "자연의 맛 건강 샐러드";
+            
+            const adjs = { '사과': '새콤달콤', '키위': '상큼한', '망고': '열대의', '돼지고기': '육즙팡팡', '소고기': '프리미엄', '새우': '통통한', '콩': '고소한', '오이': '아삭아삭', '양파': '눈물나는' };
+            const suffixes = ['볶음', '구이', '찜', '샐러드', '무침', '스튜', '스테이크'];
+
+            const mainItem = names[Math.floor(Math.random() * names.length)];
+            const adj = adjs[names[0]] || '신비로운';
+            const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+
+            return `${adj} ${mainItem} ${suffix}`;
+        }
+
+        function resetGame() {
+            currentHp = 100;
+            pot = [];
+            isCooked = false;
+            potIngredients.innerHTML = '';
+            modal.classList.remove('active');
+            updateHpUI();
+            init();
+        }
+
+        function closeModal() {
+            resetGame();
+        }
+
+        function updateHpUI() {
+            hpText.innerText = currentHp;
+            let percent = currentHp > 200 ? 100 : (currentHp / 200) * 100;
+            hpBar.style.width = `${Math.min(percent, 100)}%`;
+            if (currentHp < 50) hpBar.style.background = 'linear-gradient(90deg, #ff4500, #ff0000)';
+            else if (currentHp > 100) hpBar.style.background = 'linear-gradient(90deg, #32cd32, #00fa9a)';
+            else hpBar.style.background = 'linear-gradient(90deg, #ff69b4, #ff1493)';
+        }
+
+        function triggerShake() {
+            const ui = document.getElementById('gameUI');
+            ui.classList.remove('shake');
+            void ui.offsetWidth;
+            ui.classList.add('shake');
+        }
+
+        function showDamageText() {
+            const el = document.createElement('div');
+            el.className = 'damage-text';
+            el.innerText = '-10';
+            const container = document.querySelector('.pot-container');
+            const rect = container.getBoundingClientRect();
+            
+            // 냄비 중앙 위쪽에서 텍스트가 떠오르도록 설정
+            el.style.left = `${rect.left + (rect.width / 2) - 40}px`;
+            el.style.top = `${rect.top}px`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        function shootConfetti() {
+            const colors = ['#ff69b4', '#ffd700', '#00ff00', '#1e90ff', '#ff4500'];
+            for (let i = 0; i < 100; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.background = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.top = `-${Math.random() * 20 + 10}vh`;
+                if(Math.random() > 0.5) conf.style.borderRadius = '50%';
+                const duration = Math.random() * 2 + 1.5;
+                conf.style.animationDuration = duration + 's';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), duration * 1000);
+            }
+        }
+
+        // BGM / SFX
+        function playSfx(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'bad') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'good') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'success') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+            } else if (type === 'fail') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        function scheduleBGM() {
+            while (nextNoteTime < audioCtx.currentTime + 0.1) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square'; 
+                osc.frequency.value = melody[currentNote % melody.length];
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                gain.gain.setValueAtTime(0.05, nextNoteTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.1);
+
+                osc.start(nextNoteTime);
+                osc.stop(nextNoteTime + 0.1);
+
+                nextNoteTime += 0.15;
+                currentNote++;
+            }
+            bgmSeq = requestAnimationFrame(scheduleBGM);
+        }
+
+        function toggleBGM() {
+            const btn = document.getElementById('bgmBtn');
+            if (isBgmPlaying) {
+                cancelAnimationFrame(bgmSeq);
+                if (audioCtx) audioCtx.suspend();
+                isBgmPlaying = false;
+                btn.innerText = '🔈 BGM 켜기';
+                btn.classList.replace('bg-green-500', 'bg-gray-400');
+            } else {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                nextNoteTime = audioCtx.currentTime + 0.1;
+                scheduleBGM();
+                
+                isBgmPlaying = true;
+                btn.innerText = '🔊 BGM ON!';
+                btn.classList.replace('bg-gray-400', 'bg-green-500');
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
